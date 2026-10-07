@@ -1,4 +1,5 @@
 <?php
+require_once './includes/functions.php';
 $storename = "Online E-commerce Website";
 $categories = [
     "Electronics",
@@ -14,7 +15,7 @@ $products = [
         "price" => 55000,
         "category" => "Electronics",
         "image" => "https://placehold.co/600x400?text=Laptop",
-        "stock" => 100
+        "stock" => 5
     ],
     [
         "id" => 2,
@@ -22,7 +23,7 @@ $products = [
         "price" => 25000,
         "category" => "Electronics",
         "image" => "https://placehold.co/600x400?text=Smartphone",
-        "stock" => 250
+        "stock" => 10,
     ],
     [
         "id" => 3,
@@ -30,7 +31,7 @@ $products = [
         "price" => 2999,
         "category" => "Accessories",
         "image" => "https://placehold.co/600x400?text=Headphones",
-        "stock" => 0
+        "stock" => 2
     ],
     [
         "id" => 4,
@@ -38,8 +39,16 @@ $products = [
         "price" => 4999,
         "category" => "Accessories",
         "image" => "https://placehold.co/600x400?text=Smart+Watch",
-        "stock" => 2500
+        "stock" => 0
     ],
+    [
+        "id" => 5,
+        "name" => "Tablet",
+        "price" => 18999,
+        "category" => "Electronics",
+        "image" => "https://placehold.co/600x400?text=Tablet",
+        "stock" => 1
+    ]
 
 ];
 ?>
@@ -72,7 +81,7 @@ $products = [
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <form class="d-flex me-3" id="searchForm">
+                     <form class="d-flex me-3" id="searchForm">
                         <input class="form-control me-2" type="search" id="searchInput" placeholder="Search Products" aria-label="Search" />
                         <button class="btn btn-outline-light" type="submit">Search</button>
                         <button class="btn btn-secondary mx-2" type="button" id="clearSearch">Clear</button>
@@ -162,8 +171,9 @@ $products = [
                 <div class="row g-4">
                     <?php foreach ($products as $product): ?>
                         <div class="col-md-6 col-lg-3 product-item"
-                            data-name="<?= strtolower($product['name']) ?>"
-                            data-category="<?= strtolower($product['category']) ?>">
+                        data-name = "<?= strtolower($product['name']) ?>"
+                        data-category = "<?= strtolower($product['category']) ?>"
+                        >
                             <div class="card product-card h-100 shadow-sm">
                                 <img
                                     src="<?= $product['image'] ?>"
@@ -177,15 +187,19 @@ $products = [
                                         <?= $product['name'] ?>
                                     </h5>
                                     <h5 class="text-primary">
-                                        ₹<?= $product['price'] ?>
+                                        <?= formatPrice($product['price']) ?>
                                     </h5>
-
-                                    <?php if ($product['stock'] > 0): ?>
-                                        <button class="btn btn-primary">
+                                    <?php if(isProductAvailable($product['stock'])): ?>
+                
+                                        <button type="button"
+                                        class="btn btn-primary w-100 add-to-cart"
+                                        data-product-id = "<?= $product['id'] ?>">
                                             Add to Cart
                                         </button>
                                     <?php else: ?>
-                                        <button class="btn btn-secondary" disabled>
+                                        <button type="button"
+                                        class="btn btn-secondary w-100 add-to-cart"
+                                        data-product-id = "<?= $product['id'] ?>" disabled>
                                             Out of Stock
                                         </button>
                                     <?php endif; ?>
@@ -276,7 +290,7 @@ $products = [
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-
+    
     <script src="assets/js/script.js"></script>
 </body>
 

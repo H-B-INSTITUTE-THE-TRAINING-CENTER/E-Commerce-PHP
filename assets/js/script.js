@@ -16,6 +16,7 @@ addToCartButtons.forEach(function(button) {
     button.addEventListener("click", function () {
         cartCount ++;
         cartCounter.textContent = cartCount;
+        button.textContent = "Added ✓";
         alert("Product added to cart!");
 
     })
