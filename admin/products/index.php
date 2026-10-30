@@ -9,6 +9,7 @@ $sql = "
             p.discount,
             p.stock,
             p.status,
+            p.image,
             c.name as category_name
         FROM products AS p
         INNER JOIN categories AS c 
@@ -62,6 +63,23 @@ function e(mixed $value): string
             </a>
 
         </div>
+        <?php if (($_GET['success'] ?? '') === 'created'): ?>
+            <div class="alert alert-success my-4">
+                Product created successfully!
+            </div>
+        <?php elseif (($_GET['success'] ?? '') === 'updated'): ?>
+            <div class="alert alert-success my-4">
+                Product updated successfully!
+            </div>
+        <?php elseif (($_GET['success'] ?? '') === 'deleted'): ?>
+            <div class="alert alert-success my-4">
+                Product deleted successfully!
+            </div>
+        <?php elseif (($_GET['error'] ?? '') === 'not_found'): ?>
+            <div class="alert alert-warning my-4">
+                Product not found or already deleted!
+            </div>
+        <?php endif; ?>
 
         <div class="card shadow-sm">
             <div class="card-body">
@@ -76,6 +94,7 @@ function e(mixed $value): string
                                 <th>Discount</th>
                                 <th>Stock</th>
                                 <th>Status</th>
+                                <th>Image</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -101,6 +120,19 @@ function e(mixed $value): string
                                                     Inactive
                                                 </span>
                                             <?php endif ?>
+                                        </td>
+                                        <td>
+                                            <?php if(!empty($row['image'])): ?>
+                                                <img src="../../uploads/products/<?= e($row['image']) ?>" 
+                                                alt="<?= e($row['name']) ?>"
+                                                width="60"
+                                                height="60"
+                                                style="object-fit: contain;"
+                                                class="img-thumbnail"
+                                                >
+                                            <?php else: ?>
+                                                <span class="text-muted">No Image</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <div class="d-flex gap-2">
@@ -136,23 +168,7 @@ function e(mixed $value): string
         <a href="../../index.php" class="btn btn-outline-secondary mt-3">
             Back to Store
         </a>
-        <?php if (($_GET['success'] ?? '') === 'created'): ?>
-            <div class="alert alert-success my-4">
-                Product created successfully!
-            </div>
-        <?php elseif (($_GET['success'] ?? '') === 'updated'): ?>
-            <div class="alert alert-success my-4">
-                Product updated successfully!
-            </div>
-        <?php elseif (($_GET['success'] ?? '') === 'deleted'): ?>
-            <div class="alert alert-success my-4">
-                Product deleted successfully!
-            </div>
-        <?php elseif (($_GET['error'] ?? '') === 'not_found'): ?>
-            <div class="alert alert-warning my-4">
-                Product not found or already deleted!
-            </div>
-        <?php endif; ?>
+        
     </div>
 
     <script

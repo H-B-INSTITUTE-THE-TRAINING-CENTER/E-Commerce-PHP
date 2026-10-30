@@ -1,5 +1,6 @@
 <?php
     require_once __DIR__ . '/../../config/database.php';
+    require_once __DIR__.'/../../includes/functions.php';
 
     function e(mixed $value): string
     {
@@ -37,7 +38,7 @@
         $price = $_POST['price'] ?? '';
         $discount = $_POST['discount'] ?? '0';
         $stock = $_POST['stock'] ?? '0';
-        $image = trim($_POST['image'] ?? '');
+        
 
         if ($name === '' || strlen($name) > 150) {
             $errors[] = "Enter a product name (maximum 150 characters).";
@@ -82,19 +83,23 @@
         if (strlen($description) > 5000) {
             $errors[] = "Description is too long.";
         }
-        if (strlen($image) > 255) {
-            $errors[] = "Image filename is too long.";
-        }
+        
+        
 
         if (!$errors) {
             $price = (float)$price;
             $discount = (float)$discount;
             $stock = (int)$stock;
             $categoryId = (int)$categoryId;
-            var_dump($price);
-            var_dump($discount);
-            var_dump($stock);
-            var_dump($categoryId);
+            
+            $upload = uploadProductImage($_FILES['image'] ?? []);
+            if($upload['error'] !== null){
+                $errors[] = $upload['error'];
+            }
+                
+            $image = $upload['filename'] ?? '';
+
+
 
             $insertProduct = "
                     INSERT INTO products (category_id,name,description,price,discount,stock,image)
@@ -122,9 +127,18 @@
 
                 header("Location: index.php?success=created");
                 exit;
+            }else{
+                if($image !== ''){
+                    $path = __DIR__.'/../../uploads/products/'.$image;
+
+                    if (is_file($path)) {
+                        unlink($path);
+                    }
+                }
+                $errors[] = "Unable to save the product.";
+                mysqli_stmt_close($insert_stmt);
             }
-            $errors[] = "Unable to save the product.";
-            mysqli_stmt_close($insert_stmt);
+           
         }
     }
 ?>
@@ -160,7 +174,7 @@
                             </ul>
                         </div>
                     <?php endif; ?>
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label class="form-label">Product Name</label>
                             <input type="text" name="name" class="form-control" maxlength="150" value="<?= e($name) ?>" required>
@@ -199,9 +213,11 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Image Filename</label>
-                            <input type="text" name="image" class="form-control" maxlength="255" value="<?= e($image) ?>" placeholder="laptop.jpg">
-                            <small class="text-muted">File uploads will be implemented later</small>
+                            <label for="image" class="form-label">Product Image</label>
+                            <input type="file" name="image" id="image" class="form-control" accept="image/jpeg, image/png, image/webp">
+                            <div class="form-text">
+                                Accepted Formats: JPG, PNG, WebP. Maximum Size : 2 MB.
+                            </div>
                         </div>
                         <button class="btn btn-primary" type="submit">Save Product</button>
                         <a href="index.php" class="btn btn-outline-secondary">Cancel</a>
