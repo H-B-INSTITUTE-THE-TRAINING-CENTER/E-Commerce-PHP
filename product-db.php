@@ -1,95 +1,170 @@
 <?php
+
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+
     require_once './config/database.php';
     require_once './includes/functions.php';
-    
-    $sql = "
-        SELECT 
-        products.* ,
-        categories.name AS category_name
-            FROM products
-        INNER JOIN categories
-            ON products.category_id = categories.id
-    ";
 
-    $result = mysqli_query($conn,$sql);
+    // Fetch products with their category names
+    $sql = "
+            SELECT
+                p.*,
+                c.name AS category_name
+            FROM products AS p
+            LEFT JOIN categories AS c
+                ON p.category_id = c.id
+            ORDER BY p.id DESC
+        ";
+
+    $result = mysqli_query($conn, $sql);
 
     if (!$result) {
-        die("Unable to fetch records: ".mysqli_error($conn));
+        die("Product query failed: " . mysqli_error($conn));
+    }
+
+    $totalProducts = mysqli_num_rows($result);
+
+    // Helper for safe HTML output
+    function e(mixed $value)
+    {
+        return htmlspecialchars(
+            (string)($value ?? ''),
+            ENT_QUOTES,
+            'UTF-8'
+        );
     }
 
 ?>
+
 <!doctype html>
-<html lang="en" data-bs-theme="light">
-    <head>
-        <title>Products</title>
-        <!-- Required meta tags -->
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="en">
 
-        
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-            crossorigin="anonymous"
-        />
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <body>
-        <header>
-            <!-- place navbar here -->
-        </header>
-        <main>
-            <div class="container py-5">
-                <h1 class="mb-4">Products</h1>
-                <div class="row g-4">
-                    <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body">
-                                <span class="badge bg-secondary">
-                                    <!-- Category ID: <?= $row['category_id'] ?> -->
-                                    <?= $row['category_name'] ?>
+    <title>Our Products | Online Store</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .product-image {
+            height: 220px;
+            width: 100%;
+            object-fit: contain;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .product-card {
+            transition: transform 0.2s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-description {
+            min-height: 48px;
+        }
+    </style>
+</head>
+<body>
+    <main class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Our Products</h1>
+            <span class="badge bg-primary fs-6">
+                <?= $totalProducts ?> Products
+            </span>
+        </div>
+        <?php if ($totalProducts > 0): ?>
+            <div class="row g-4">
+                <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                    <?php
+                        $imageFilename = basename($row['image'] ?? '');
+
+                        $imageFile = __DIR__ . '/uploads/products/' . $imageFilename;
+
+                        $imageUrl = !empty($imageFilename) && is_file($imageFile)
+                            ? 'uploads/products/' . rawurlencode($imageFilename)
+                            : null;
+
+                        $finalPrice = calculateDiscountedPrice(
+                            (float)$row['price'],
+                            (float)$row['discount']
+                        );
+                    ?>
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <div class="card product-card h-100 shadow-sm">
+                            <?php if ($imageUrl): ?>
+                                <img
+                                    src="<?= e($imageUrl) ?>"
+                                    class="card-img-top product-image"
+                                    alt="<?= e($row['name']) ?>">
+                            <?php else: ?>
+                                <div class="product-image d-flex justify-content-center align-items-center">
+                                    <span class="text-muted">
+                                        No Image Available
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+                            <div class="card-body d-flex flex-column">
+                                <span class="badge bg-secondary align-self-start">
+                                    <?= e($row['category_name'] ?? 'Uncategorized') ?>
                                 </span>
                                 <h5 class="card-title mt-3">
-                                    <?= $row['name'] ?>
+                                    <?= e($row['name']) ?>
                                 </h5>
-                                <p class="card-text">
-                                    <?= $row['description'] ?>
+                                <p class="card-text product-description">
+                                    <?= e($row['description']) ?>
                                 </p>
-                                
-                                <?php
-                                    $finalPrice = calculateDiscountedPrice($row['price'],$row['discount']);
-                                ?>
-                                <p>
-                                    <del>
-                                        ₹<?= number_format($row['price'],2) ?>
+                                <p class="mb-1">
+                                    <del class="text-muted">
+                                        ₹<?= number_format((float)$row['price'], 2) ?>
                                     </del>
                                 </p>
                                 <h5 class="text-primary">
-                                    ₹<?= number_format($finalPrice,2) ?>
+                                    ₹<?= number_format((float)$finalPrice, 2) ?>
                                 </h5>
-                                <span class="badge bg-danger">
-                                    <?= $row['discount'] ?>% OFF
+                                <span class="badge bg-danger align-self-start mb-3">
+                                    <?= (int)$row['discount'] ?>% OFF
                                 </span>
-                                
-                                <p>Stock: <?= $row['stock'] ?></p>
-                                <button class="btn btn-primary w-100">Add to Cart</button>
+                                <p>
+                                    Stock: <?= (int)$row['stock'] ?>
+                                </p>
+                                <a href="product-details.php?id=<?= (int)$row['id'] ?>"
+                                    class="btn btn-primary w-100">
+                                    View Details
+                                </a>
                             </div>
                         </div>
-                    </div>                        
-                    <?php endwhile ?>
-                </div>
+                    </div>
+                <?php endwhile; ?>
             </div>
-        </main>
-        <footer>
-            <!-- place footer here -->
-        </footer>
-        <!-- Bootstrap JavaScript Bundle (includes Popper) -->
-        <script
-            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-            crossorigin="anonymous"
-        ></script>
-    </body>
+        <?php else: ?>
+
+            <div class="alert alert-warning text-center">
+                <h4>No Products Found</h4>
+                <p class="mb-0">
+                    Please add products through the admin panel.
+                </p>
+            </div>
+
+        <?php endif; ?>
+
+    </main>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+</body>
+
 </html>
