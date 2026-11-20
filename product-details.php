@@ -4,6 +4,8 @@
 
     require_once __DIR__.'/config/database.php';
     require_once __DIR__.'/includes/functions.php';
+    require_once __DIR__.'/includes/cart-functions.php';
+
 
     function e(mixed $value){
         return htmlspecialchars(
@@ -127,20 +129,25 @@
                         <p class="text-danger fw-bold">Out Of Stock</p>
                     <?php endif; ?>
 
-                    <!-- QUANTITY -->
-                     <div class="mb-3">
-                        <label for="quantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" value="1" min="1" max="<?= (int)$product['stock']?>"
-                        <?= (int)$product['stock'] < 1 ? 'disabled':'' ?>
-                        style="max-width: 120px;" >
-                     </div>
-
-                     <!-- ADD TO CART -->
-                      <button type="submit" class="btn btn-primary btn-lg" <?= (int)$product['stock'] < 1 ? 'disabled':'' ?>>
-                        Add to Cart
-                    </button>
-                    <a href="product-db.php" class="btn btn-outline-secondary btn-lg">Continue Shopping</a>
+                    <!-- ADD TO CART -->
+                    <form action="add-to-cart.php" method="post">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(cart_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+                        <input type="hidden" name="product_id" value="<?= (int)$product['id'] ?>">
                         
+                        <!-- QUANTITY -->
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="<?= (int)$product['stock']?>" required
+                            <?= (int)$product['stock'] < 1 ? 'disabled':'' ?>
+                            style="max-width: 120px;" >
+                        </div>
+                            
+                        <button type="submit" class="btn btn-primary btn-lg" <?= (int)$product['stock'] < 1 ? 'disabled' : '' ?>>
+                            Add to Cart
+                        </button>
+                        
+                        <a href="product-db.php" class="btn btn-outline-secondary btn-lg">Continue Shopping</a>
+                    </form>
                  </div>
 
             </div>
